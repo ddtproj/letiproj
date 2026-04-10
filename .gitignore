@@ -62,3 +62,5 @@ archive/**/.pytest_cache/
 archive/**/__pycache__/
 archive/**/*.pyc
 archive/**/*.log
+archive/**/*.egg-info/
+archive/**/BPSIM_output.xml
