@@ -1,0 +1,320 @@
+Сводка по parsed-log-dto.json
+
+1. Общая идея
+
+Файл parsed-log-dto.json содержит результат разбора log.txt.
+Каждая строка исходного лога либо превращается в структурированную запись,
+либо попадает в список unknownLines, если ее формат не удалось распознать.
+
+JSON организован в двух формах одновременно:
+- как общая сводка по всему логу;
+- как список всех событий по порядку;
+- как отдельные специализированные списки по типам событий.
+
+
+2. Верхний уровень JSON
+
+sourceFile
+- Абсолютный путь к исходному log.txt.
+
+summary
+- Краткая статистика по всему логу.
+
+entries
+- Главный список всех распознанных записей.
+- Сохраняет порядок строк таким же, как в исходном log.txt.
+- Это самый удобный массив, если нужно читать лог последовательно.
+
+processEvents
+- Только события процесса вида Enabled / Completed.
+
+resourceEvents
+- Только события, связанные с ресурсами:
+  RESOURCE_AVAILABLE или RESOURCE_UNAVAILABLE.
+
+processStates
+- Только состояния процесса:
+  PROCESS_STARTED, PROCESS_FINISHED, PROCESS_SNAPSHOT.
+
+statusMessages
+- Дополнительные сообщения процесса, если встретятся строки вида:
+  Process: ... <сообщение> at time ...
+
+exitCodes
+- Строки формата:
+  Process finished with exit code ...
+
+simulationMarkers
+- Служебные маркеры симуляции.
+- Например:
+  Simulation finished
+
+unknownLines
+- Нераспознанные строки.
+- Если парсер все понял, этот список пустой.
+
+
+3. Блок summary
+
+summary.totalRecords
+- Общее число непустых строк, которые были обработаны.
+
+summary.distinctProcessIds
+- Количество уникальных processId, найденных в логе.
+
+summary.firstEventTime
+- Самое раннее время события в логе.
+
+summary.lastFinishTime
+- Самое позднее время завершения процесса.
+
+summary.unknownLines
+- Количество строк, которые парсер не смог разобрать.
+
+summary.countsByType
+- Счетчик записей по внутренним типам парсера.
+- Примеры значений:
+  process_event
+  resource_available
+  resource_unavailable
+  process_finished
+  process_snapshot
+  process_exit_code
+  simulation_finished
+
+
+4. Как читать entries
+
+entries — это универсальный список.
+Каждый объект entries соответствует одной строке исходного лога.
+
+Общие поля каждой записи:
+
+lineNumber
+- Номер строки в исходном log.txt.
+
+entryType
+- Нормализованный тип записи.
+- Основные варианты:
+  PROCESS_EVENT
+  RESOURCE_AVAILABLE
+  RESOURCE_UNAVAILABLE
+  PROCESS_STARTED
+  PROCESS_FINISHED
+  PROCESS_SNAPSHOT
+  PROCESS_STATUS_MESSAGE
+  PROCESS_EXIT_CODE
+  SIMULATION_FINISHED
+  UNKNOWN
+
+processId
+- Идентификатор процесса, если он есть у этой строки.
+
+rawLine
+- Исходная строка лога без изменений.
+
+
+5. Тип PROCESS_EVENT
+
+Это строки вида:
+- Process: ... Completed: ...
+- Process: ... Enabled: ...
+
+Дополнительные поля:
+
+state
+- Состояние события:
+  COMPLETED или ENABLED
+
+element
+- Вложенный объект с информацией об элементе процесса.
+
+eventTime
+- Время, когда событие произошло.
+
+idleSeconds
+- Время простоя в секундах.
+- Обычно есть у Completed-событий.
+
+completionTime
+- Плановое время завершения.
+- Обычно есть у Enabled-событий.
+
+Структура element:
+
+element.type
+- Тип элемента.
+- Примеры:
+  TASK
+  EVENT START
+  EVENT END
+  GATEWAY gw: AND
+  GATEWAY gw: XOR
+
+element.name
+- Человекочитаемое имя элемента, если оно было в скобках.
+- Например:
+  Check credit history
+  Credit application received
+
+element.id
+- BPMN/internal id элемента.
+
+element.index
+- Индекс элемента внутри модели.
+
+element.durationSeconds
+- Длительность, указанная в строке лога.
+
+
+6. Типы RESOURCE_AVAILABLE и RESOURCE_UNAVAILABLE
+
+Это строки про наличие или нехватку ресурсов.
+
+Дополнительные поля:
+
+resource
+- Вложенный объект с информацией о ресурсе.
+
+element
+- Вложенный объект с информацией о задаче или элементе,
+  для которого требовался ресурс.
+
+Структура resource:
+
+resource.availableCount
+- Количество доступных ресурсов.
+- Для RESOURCE_AVAILABLE заполнено.
+- Для RESOURCE_UNAVAILABLE обычно null.
+
+resource.name
+- Название ресурса.
+
+resource.id
+- Идентификатор ресурса.
+
+resource.index
+- Индекс ресурса.
+
+Структура element
+- Такая же, как у PROCESS_EVENT.
+
+
+7. Типы PROCESS_STARTED, PROCESS_FINISHED, PROCESS_SNAPSHOT
+
+Это краткие состояния самого процесса.
+
+PROCESS_STARTED
+- Процесс начался.
+
+PROCESS_FINISHED
+- Процесс завершился.
+
+PROCESS_SNAPSHOT
+- Снимок состояния процесса.
+- Например строка:
+  - Process 300 at time ... idle for: 0.0s
+
+Поля:
+
+eventTime
+- Время состояния.
+
+idleSeconds
+- Есть в основном у PROCESS_SNAPSHOT.
+
+
+8. Тип PROCESS_STATUS_MESSAGE
+
+Это запасной тип для строк процесса, которые не относятся
+к обычным Enabled/Completed, но содержат сообщение и время.
+
+Поля:
+
+message
+- Текст сообщения.
+
+eventTime
+- Время сообщения.
+
+
+9. Тип PROCESS_EXIT_CODE
+
+Это служебная строка завершения программы.
+
+Поля:
+
+exitCode
+- Код завершения процесса Java.
+
+
+10. Тип SIMULATION_FINISHED
+
+Это маркер завершения симуляции.
+
+Он попадает:
+- в entries как запись с entryType = SIMULATION_FINISHED;
+- в simulationMarkers как исходная строка.
+
+
+11. Зачем одновременно нужны entries и отдельные списки
+
+entries
+- Удобен, если нужно пройти лог по порядку и восстановить историю событий.
+
+processEvents
+- Удобен, если интересуют только события элементов процесса.
+
+resourceEvents
+- Удобен, если нужно анализировать дефицит или доступность ресурсов.
+
+processStates
+- Удобен, если нужен только жизненный цикл процессов.
+
+То есть:
+- entries = полный журнал в структурированном виде;
+- остальные списки = готовые выборки по категориям.
+
+
+12. Как читать JSON на практике
+
+Если нужно понять, что происходило в логе по порядку:
+- читать массив entries сверху вниз.
+
+Если нужно найти проблемы с ресурсами:
+- смотреть resourceEvents;
+- особенно записи с entryType = RESOURCE_UNAVAILABLE.
+
+Если нужно проследить один конкретный процесс:
+- фильтровать entries по processId.
+
+Если нужно посчитать, сколько было задач, gateway и событий:
+- смотреть processEvents и поле element.type.
+
+Если нужно понять, какие именно BPMN-элементы встречались:
+- смотреть element.id, element.name, element.index.
+
+
+13. Пример чтения одной записи
+
+Пример:
+- entryType = PROCESS_EVENT
+- processId = 307
+- state = COMPLETED
+- element.type = TASK
+- element.name = Check credit history
+- eventTime = 2013-07-12 12:50:59
+
+Это читается так:
+- у процесса 307 завершилась задача Check credit history
+  в момент 2013-07-12 12:50:59.
+
+
+14. Что означает пустой unknownLines
+
+Если:
+- summary.unknownLines = 0
+- unknownLines = []
+
+это значит, что текущий log.txt парсер разобрал полностью,
+без пропущенных форматов строк.

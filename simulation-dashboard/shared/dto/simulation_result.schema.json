@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "SimulationResultDto",
+  "type": "object",
+  "required": ["runId", "status", "summary", "activities", "resources", "charts"],
+  "properties": {
+    "runId": { "type": "string" },
+    "status": { "type": "string", "enum": ["queued", "running", "completed", "failed"] },
+    "startedAt": { "type": ["string", "null"] },
+    "finishedAt": { "type": ["string", "null"] },
+    "summary": {
+      "type": "object",
+      "properties": {
+        "simulationTimeSec": { "type": ["number", "null"] },
+        "processCount": { "type": ["integer", "null"] },
+        "completedProcessCount": { "type": ["integer", "null"] },
+        "failedProcessCount": { "type": ["integer", "null"] }
+      }
+    },
+    "activities": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string" },
+          "count": { "type": ["integer", "null"] },
+          "avgDurationSec": { "type": ["number", "null"] },
+          "minDurationSec": { "type": ["number", "null"] },
+          "maxDurationSec": { "type": ["number", "null"] }
+        }
+      }
+    },
+    "resources": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string" },
+          "blockCount": { "type": ["integer", "null"] },
+          "utilizationPercent": { "type": ["number", "null"] }
+        }
+      }
+    },
+    "charts": {
+      "type": "object"
+    }
+  }
+}

@@ -1,0 +1,53 @@
+{
+  "runId": "real_run_001",
+  "status": "completed",
+  "startedAt": "2026-03-31T10:00:00Z",
+  "finishedAt": "2026-03-31T10:03:12Z",
+  "summary": {
+    "simulationTimeSec": 192,
+    "processCount": 3000,
+    "completedProcessCount": 2941,
+    "failedProcessCount": 59,
+    "activityStartedCount": 3200,
+    "activityCompletedCount": 3150,
+    "blockedWaitCount": 15
+  },
+  "processStats": {
+    "minDurationSec": 12,
+    "avgDurationSec": 87.4,
+    "maxDurationSec": 340,
+    "durations": [12, 15, 20, 21, 33]
+  },
+  "activities": [
+    {
+      "name": "A_SUBMITTED",
+      "count": 3000,
+      "avgDurationSec": 4.2,
+      "minDurationSec": 1.0,
+      "maxDurationSec": 11.0
+    }
+  ],
+  "resources": [
+    {
+      "name": "role1",
+      "blockCount": 15,
+      "availableCount": 8,
+      "observedWorkTimeSec": 1250,
+      "utilizationPercent": 72.3
+    }
+  ],
+  "charts": {
+    "activityCounts": [
+      { "name": "A_SUBMITTED", "value": 3000 }
+    ],
+    "activityAvgDurations": [
+      { "name": "A_SUBMITTED", "value": 4.2 }
+    ],
+    "resourceBlocks": [
+      { "name": "role1", "value": 15 }
+    ],
+    "processDurationHistogram": [
+      { "binLabel": "0-10", "from": 0, "to": 10, "count": 24 }
+    ]
+  }
+}

@@ -1,0 +1,11 @@
+*.iml
+
+**/target/
+**/out
+**/.idea/
+**/classes/
+
+*.log
+*.log.*
+*.~*
+

@@ -1,0 +1,64 @@
+cache
+node_modules
+npm
+dist/
+.cache/
+
+# Frontend / JS
+node_modules/
+simulation-dashboard/frontend/node_modules/
+simulation-dashboard/frontend/dist/
+
+# Java / Maven
+**/target/
+**/out/
+*.class
+*.jar
+*.war
+*.ear
+simulation-dashboard/backend-java/.mvn/repository/
+apache-maven-3.9.14/
+maven-mvnd-1.0.5-windows-amd64/
+
+# Runtime artifacts
+*.log
+*.log.*
+*.pid
+*.seed
+*.pid.lock
+hs_err_pid*
+replay_pid*
+
+# Python leftovers
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# IDE / OS
+.idea/
+*.iml
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Local env files
+.env
+.env.local
+
+# Simulation outputs
+simulation-dashboard/backend-java/storage/runs/**
+!simulation-dashboard/backend-java/storage/runs/
+!simulation-dashboard/backend-java/storage/runs/.gitkeep
+letitsim-main/log.txt
+letitsim-main/parsed-log-dto.json
+letitsim-main/stdout.log
+letitsim-main/stderr.log
+
+# Archive artifacts
+archive/**/node_modules/
+archive/**/dist/
+archive/**/build/
+archive/**/.pytest_cache/
+archive/**/__pycache__/
+archive/**/*.pyc
+archive/**/*.log
