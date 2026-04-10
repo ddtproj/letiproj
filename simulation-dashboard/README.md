@@ -1,39 +1,30 @@
 # Simulation Dashboard
 
-Актуальная продуктовая часть репозитория.
+Product layer of the repository that combines:
 
-Состав:
+- `backend-java/` - Spring Boot backend API
+- `frontend/` - React + Vite user interface
+- `shared/` - shared DTO examples and schema
+- `docs/` - architecture and integration notes
 
-- `backend-java/` — основной backend на Spring Boot
-- `frontend/` — пользовательский интерфейс на React + Vite
-- `shared/` — контракт DTO
-- `docs/` — архитектурные и интеграционные заметки
+## Responsibilities
 
-## Что делает система
+- accept a BPMN specification path
+- create and track simulation runs
+- launch the Java simulation engine from `../letitsim-main`
+- store run artifacts
+- parse event logs
+- calculate summary, activity, resource, and histogram metrics
+- return ready-to-render DTOs for the frontend
 
-- принимает путь к BPMN-файлу
-- создает запуск симуляции
-- вызывает Java-движок из `../letitsim-main`
-- сохраняет артефакты запуска
-- парсит лог событий
-- считает summary, activity, resource и histogram метрики
-- отдает готовый DTO для frontend
-
-## Текущий стек
+## Current stack
 
 - Backend: Java 17 + Spring Boot
 - Frontend: React 18 + Vite
-- Engine: Java simulator из `letitsim-main`
+- Engine: Java simulator from `letitsim-main`
 - Transport: JSON over HTTP
 
-## Структура
-
-- [backend-java](/c:/Users/Admin/Desktop/bimp-ui-master/simulation-dashboard/backend-java)
-- [frontend](/c:/Users/Admin/Desktop/bimp-ui-master/simulation-dashboard/frontend)
-- [shared](/c:/Users/Admin/Desktop/bimp-ui-master/simulation-dashboard/shared)
-- [docs](/c:/Users/Admin/Desktop/bimp-ui-master/simulation-dashboard/docs)
-
-## Запуск
+## Run locally
 
 ### Backend
 
@@ -42,7 +33,9 @@ cd backend-java
 mvn spring-boot:run
 ```
 
-По умолчанию сервис поднимается на `http://127.0.0.1:8000`.
+Default backend URL:
+
+- `http://127.0.0.1:8000`
 
 ### Frontend
 
@@ -52,7 +45,22 @@ npm install
 npm run dev
 ```
 
-## Важно
+## Tests
 
-Для реального запуска симуляции backend ожидает, что `letitsim-main` уже собран и содержит `target/classes`.
-Если движок еще не собран, сначала собери его по инструкции в [letitsim-main/README.md](/c:/Users/Admin/Desktop/bimp-ui-master/letitsim-main/README.md).
+### Backend
+
+```bash
+cd backend-java
+mvn test
+```
+
+### Frontend
+
+```bash
+cd frontend
+npm test
+```
+
+## Important runtime note
+
+For real simulation runs, the backend expects the engine project `letitsim-main` to be compiled and to contain `target/classes`.
