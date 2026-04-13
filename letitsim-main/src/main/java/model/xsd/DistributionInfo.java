@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlAnyElement;
 import javax.xml.bind.annotation.XmlAttribute;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlType;
@@ -13,11 +14,14 @@ import javax.xml.bind.annotation.XmlType;
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(
         name = "DistributionInfo",
-        propOrder = {"histogramDataBins"}
+        propOrder = {"timeUnit", "histogramDataBins", "any"}
 )
 public class DistributionInfo {
 
+    protected String timeUnit;
     protected DistributionInfo.HistogramDataBins histogramDataBins;
+    @XmlAnyElement(lax = true)
+    protected List<Object> any;
     @XmlAttribute(name = "type", required = true)
     protected DistributionType type;
 
@@ -34,6 +38,14 @@ public class DistributionInfo {
     protected Double arg2;
 
     public DistributionInfo() {
+    }
+
+    public String getTimeUnit() {
+        return this.timeUnit;
+    }
+
+    public void setTimeUnit(String value) {
+        this.timeUnit = value;
     }
 
     public DistributionInfo.HistogramDataBins getHistogramDataBins() {
@@ -74,6 +86,14 @@ public class DistributionInfo {
 
     public void setArg2(Double value) {
         this.arg2 = value;
+    }
+
+    public List<Object> getAny() {
+        if (this.any == null) {
+            this.any = new ArrayList();
+        }
+
+        return this.any;
     }
 
     @XmlAccessorType(XmlAccessType.FIELD)

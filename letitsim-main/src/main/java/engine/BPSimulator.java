@@ -165,9 +165,6 @@ public class BPSimulator {
                         this.simulationStartTime = this.modelParser.getStartTime();
                         this.startTime = System.currentTimeMillis();
 
-                        //WTF?
-                        this.setMaxSimulationCycleTimeInSeconds(94608000);
-
                         break;
                     }
 

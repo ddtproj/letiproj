@@ -1,12 +1,14 @@
 package model.xsd;
 
 
+import java.util.ArrayList;
+import java.util.List;
 import javax.xml.bind.annotation.*;
 
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(
         name = "ElementSimulationInfoType",
-        propOrder = {"durationDistribution", "resourceIds"}
+        propOrder = {"durationDistribution", "resourceIds", "durationThresholdTimeUnit", "any"}
 )
 public class ElementSimulationInfoType {
     @XmlElement(
@@ -17,6 +19,9 @@ public class ElementSimulationInfoType {
             required = true
     )
     protected ElementSimulationInfoType.ResourceIds resourceIds;
+    protected String durationThresholdTimeUnit;
+    @XmlAnyElement(lax = true)
+    protected List<Object> any;
     @XmlAttribute(
             name = "id"
     )
@@ -60,6 +65,14 @@ public class ElementSimulationInfoType {
 
     public void setResourceIds(ElementSimulationInfoType.ResourceIds value) {
         this.resourceIds = value;
+    }
+
+    public String getDurationThresholdTimeUnit() {
+        return this.durationThresholdTimeUnit;
+    }
+
+    public void setDurationThresholdTimeUnit(String value) {
+        this.durationThresholdTimeUnit = value;
     }
 
     public String getId() {
@@ -108,6 +121,14 @@ public class ElementSimulationInfoType {
 
     public void setSimulateAsTask(Boolean value) {
         this.simulateAsTask = value;
+    }
+
+    public List<Object> getAny() {
+        if (this.any == null) {
+            this.any = new ArrayList();
+        }
+
+        return this.any;
     }
 
     @XmlAccessorType(XmlAccessType.FIELD)

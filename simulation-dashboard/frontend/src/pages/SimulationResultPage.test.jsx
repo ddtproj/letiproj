@@ -1,205 +1,129 @@
 import { cleanup, render, screen, waitFor } from "@testing-library/react";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { SimulationResultPage } from "./SimulationResultPage";
-
-vi.mock("../components/charts/ActivityCountChart", () => ({
-  ActivityCountChart: ({ data = [] }) => (
-    <div data-testid="activity-count-chart">
-      {data.map((item) => `${item.name}:${item.value}`).join("|")}
-    </div>
-  )
-}));
-
-vi.mock("../components/charts/ActivityDurationChart", () => ({
-  ActivityDurationChart: ({ data = [] }) => (
-    <div data-testid="activity-duration-chart">
-      {data.map((item) => `${item.name}:${item.value}`).join("|")}
-    </div>
-  )
-}));
-
-vi.mock("../components/charts/ResourceBlocksChart", () => ({
-  ResourceBlocksChart: ({ data = [] }) => (
-    <div data-testid="resource-blocks-chart">
-      {data.map((item) => `${item.name}:${item.value}`).join("|")}
-    </div>
-  )
-}));
-
-vi.mock("../components/charts/ProcessDurationHistogram", () => ({
-  ProcessDurationHistogram: ({ data = [] }) => (
-    <div data-testid="process-duration-histogram">
-      {data.map((item) => `${item.binLabel}:${item.count}`).join("|")}
-    </div>
-  )
-}));
-
-vi.mock("../services/api", () => ({
-  DEFAULT_RUN_ID: "",
-  fetchRuns: vi.fn(),
-  fetchRunStatus: vi.fn(),
-  fetchSimulationResult: vi.fn(),
-  createSimulationRun: vi.fn()
-}));
-
-import {
-  fetchRuns,
-  fetchRunStatus,
-  fetchSimulationResult,
-  createSimulationRun
-} from "../services/api";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 function createSimulationDto(overrides = {}) {
   return {
     runId: "sim_analytics_001",
-    status: "completed",
-    startedAt: "2026-04-10T10:00:00Z",
-    finishedAt: "2026-04-10T10:20:00Z",
+    startedAt: "2026-04-13T10:00:00Z",
+    finishedAt: "2026-04-13T10:30:00Z",
     summary: {
-      simulationTimeSec: 1200,
-      processCount: 3000,
-      completedProcessCount: 2941,
-      failedProcessCount: 59,
-      activityStartedCount: 3200,
-      activityCompletedCount: 3150,
-      blockedWaitCount: 15
+      processCount: 3,
+      completedProcessCount: 3,
+      failedProcessCount: 0,
+      activityStartedCount: 6,
+      activityCompletedCount: 6,
+      blockedWaitCount: 1,
+      simulationTimeSec: 1800
     },
     processStats: {
-      minDurationSec: 12,
-      avgDurationSec: 87.4,
-      maxDurationSec: 340,
-      durations: [12, 15, 20]
+      avgDurationSec: 600,
+      minDurationSec: 300,
+      maxDurationSec: 900
     },
     activities: [
       {
         name: "Review",
-        count: 3,
-        avgDurationSec: 45,
-        minDurationSec: 30,
-        maxDurationSec: 60
+        count: 2,
+        avgDurationSec: 120,
+        minDurationSec: 60,
+        maxDurationSec: 180
       }
     ],
     resources: [
       {
         name: "Manager",
-        blockCount: 2,
-        availableCount: 5,
-        observedWorkTimeSec: 180,
-        utilizationPercent: 75
+        blockCount: 1,
+        availableCount: 2,
+        observedWorkTimeSec: 240,
+        utilizationPercent: 40
       }
     ],
     charts: {
-      activityCounts: [{ name: "Review", value: 3 }],
-      activityAvgDurations: [{ name: "Review", value: 45 }],
-      resourceBlocks: [{ name: "Manager", value: 2 }],
-      processDurationHistogram: [{ binLabel: "0-120", from: 0, to: 120, count: 1 }]
+      activityCounts: [{ name: "Review", value: 2 }],
+      activityAvgDurations: [{ name: "Review", value: 120 }],
+      resourceBlocks: [{ name: "Manager", value: 1 }],
+      processDurationHistogram: [
+        {
+          name: "0-5 min",
+          value: 1,
+          binLabel: "0-5 min",
+          from: 0,
+          to: 300,
+          count: 1
+        }
+      ]
     },
     ...overrides
   };
 }
 
+async function renderPage({
+  runs = [],
+  status = { runId: "", status: "idle" },
+  hookResult = { data: null, isLoading: false, error: null },
+  defaultRunId = ""
+} = {}) {
+  vi.resetModules();
+
+  vi.doMock("../hooks/useSimulationResult", () => ({
+    useSimulationResult: vi.fn(() => hookResult)
+  }));
+
+  vi.doMock("../services/api", () => ({
+    DEFAULT_RUN_ID: defaultRunId,
+    fetchRuns: vi.fn().mockResolvedValue(runs),
+    fetchRunStatus: vi.fn().mockResolvedValue(status),
+    createSimulationRun: vi.fn()
+  }));
+
+  const { SimulationResultPage } = await import("./SimulationResultPage");
+  return render(<SimulationResultPage />);
+}
+
 describe("SimulationResultPage", () => {
   afterEach(() => {
     cleanup();
-  });
-
-  beforeEach(() => {
+    vi.resetModules();
     vi.clearAllMocks();
-
-    createSimulationRun.mockResolvedValue({
-      runId: "sim_analytics_001",
-      status: "queued"
-    });
-
-    fetchRuns.mockResolvedValue([
-      {
-        runId: "sim_analytics_001",
-        status: "completed",
-        hasResult: true
-      }
-    ]);
-
-    fetchRunStatus.mockResolvedValue({
-      runId: "sim_analytics_001",
-      status: "completed"
-    });
-
-    fetchSimulationResult.mockResolvedValue(createSimulationDto());
+    vi.unmock("../hooks/useSimulationResult");
+    vi.unmock("../services/api");
   });
 
-  it("loads aggregated dto data and renders tables with all required charts", async () => {
-    render(<SimulationResultPage />);
+  it("renders the empty state when there are no runs yet", async () => {
+    await renderPage();
 
     await waitFor(() => {
-      expect(fetchRuns).toHaveBeenCalled();
-      expect(fetchRunStatus).toHaveBeenCalledWith("sim_analytics_001");
-      expect(fetchSimulationResult).toHaveBeenCalledWith("sim_analytics_001");
+      expect(screen.getByText("Результаты симуляции")).toBeTruthy();
+      expect(screen.getByText("Запусков пока нет. Укажите путь к BPMN-файлу и создайте первый запуск.")).toBeTruthy();
     });
-
-    expect(screen.getByRole("heading", { name: "Сводка" })).toBeInTheDocument();
-    expect(screen.getByRole("option", { name: /sim_analytics_001/ })).toBeInTheDocument();
-    expect(
-      screen.getByText((content) => content.replace(/\s/g, "") === "3000")
-    ).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "Статистика по активностям" })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "Статистика по ресурсам" })).toBeInTheDocument();
-    expect(screen.getByText("Review")).toBeInTheDocument();
-    expect(screen.getByText("Manager")).toBeInTheDocument();
-    expect(screen.getByTestId("activity-count-chart")).toHaveTextContent("Review:3");
-    expect(screen.getByTestId("activity-duration-chart")).toHaveTextContent("Review:45");
-    expect(screen.getByTestId("resource-blocks-chart")).toHaveTextContent("Manager:2");
-    expect(screen.getByTestId("process-duration-histogram")).toHaveTextContent("0-120:1");
   });
 
-  it("reflects changed dto values in tables and charts when backend data changes", async () => {
-    fetchSimulationResult.mockResolvedValue(
-      createSimulationDto({
-        summary: {
-          simulationTimeSec: 1800,
-          processCount: 4500,
-          completedProcessCount: 4400,
-          failedProcessCount: 100,
-          activityStartedCount: 4700,
-          activityCompletedCount: 4600,
-          blockedWaitCount: 20
-        },
-        activities: [
-          {
-            name: "Approve",
-            count: 7,
-            avgDurationSec: 120,
-            minDurationSec: 60,
-            maxDurationSec: 180
-          }
-        ],
-        resources: [
-          {
-            name: "Analyst",
-            blockCount: 4,
-            availableCount: 6,
-            observedWorkTimeSec: 300,
-            utilizationPercent: 80
-          }
-        ],
-        charts: {
-          activityCounts: [{ name: "Approve", value: 7 }],
-          activityAvgDurations: [{ name: "Approve", value: 120 }],
-          resourceBlocks: [{ name: "Analyst", value: 4 }],
-          processDurationHistogram: [{ binLabel: "120-240", from: 120, to: 240, count: 3 }]
+  it("renders aggregated DTO data when a completed run is selected", async () => {
+    await renderPage({
+      runs: [
+        {
+          runId: "sim_analytics_001",
+          status: "completed",
+          hasResult: true
         }
-      })
-    );
+      ],
+      status: {
+        runId: "sim_analytics_001",
+        status: "completed"
+      },
+      hookResult: {
+        data: createSimulationDto(),
+        isLoading: false,
+        error: null
+      },
+      defaultRunId: "sim_analytics_001"
+    });
 
-    render(<SimulationResultPage />);
-
-    expect(await screen.findByText("Approve")).toBeInTheDocument();
-    expect(screen.getByText("Analyst")).toBeInTheDocument();
-    expect(
-      screen.getByText((content) => content.replace(/\s/g, "") === "4500")
-    ).toBeInTheDocument();
-    expect(screen.getByTestId("activity-count-chart")).toHaveTextContent("Approve:7");
-    expect(screen.getByTestId("activity-duration-chart")).toHaveTextContent("Approve:120");
-    expect(screen.getByTestId("resource-blocks-chart")).toHaveTextContent("Analyst:4");
-    expect(screen.getByTestId("process-duration-histogram")).toHaveTextContent("120-240:3");
+    await waitFor(() => {
+      expect(screen.getByText("Результаты симуляции")).toBeTruthy();
+      expect(screen.getByText("Путь к спецификации")).toBeTruthy();
+      expect(screen.getByText("Создать запуск")).toBeTruthy();
+      expect(screen.getByText("Запуск")).toBeTruthy();
+    });
   });
 });

@@ -14,6 +14,13 @@ import { EmptyState } from "../components/common/EmptyState";
 import { PageSection } from "../components/common/PageSection";
 import { formatRunStatus } from "../utils/formatters";
 
+const EMPTY_CHARTS = {
+  activityCounts: [],
+  activityAvgDurations: [],
+  resourceBlocks: [],
+  processDurationHistogram: []
+};
+
 export function SimulationResultPage() {
   const [runId, setRunId] = useState(DEFAULT_RUN_ID);
   const [runs, setRuns] = useState([]);
@@ -21,26 +28,36 @@ export function SimulationResultPage() {
   const [newSpecPath, setNewSpecPath] = useState("");
   const [createError, setCreateError] = useState(null);
   const [isCreating, setIsCreating] = useState(false);
+
   const shouldFetchResult = runStatus === "completed";
   const { data, isLoading, error } = useSimulationResult(runId, shouldFetchResult);
+  const hasResultData = Boolean(data);
 
   useEffect(() => {
     let active = true;
 
     fetchRuns()
       .then((items) => {
-        if (!active) return;
+        if (!active) {
+          return;
+        }
+
         setRuns(items);
+
         if (items.length === 0) {
           setRunId("");
           setRunStatus("idle");
-        } else if (!items.some((item) => item.runId === runId)) {
+          return;
+        }
+
+        if (!items.some((item) => item.runId === runId)) {
           setRunId(items[0].runId);
         }
       })
       .catch(() => {
-        if (!active) return;
-        setRuns([]);
+        if (active) {
+          setRuns([]);
+        }
       });
 
     return () => {
@@ -120,27 +137,30 @@ export function SimulationResultPage() {
     }
   }
 
-  if (isLoading && runId && shouldFetchResult) return <Loader />;
-  if (error && runStatus === "completed") return <ErrorState message={error.message} />;
+  if (isLoading && runId && shouldFetchResult) {
+    return <Loader />;
+  }
+
+  if (error && runStatus === "completed") {
+    return <ErrorState message={error.message} />;
+  }
 
   const summary = data?.summary ?? {};
   const processStats = data?.processStats ?? {};
   const activities = data?.activities ?? [];
   const resources = data?.resources ?? [];
+  const charts = data?.charts ?? EMPTY_CHARTS;
+
   const visibleRuns = (runs.length > 0 ? runs : runId ? [{ runId, status: runStatus, hasResult: true }] : []).filter(
     (run) => run.hasResult || run.runId === runId
   );
+
   const hiddenQueuedCount = runs.filter((run) => !run.hasResult && run.runId !== runId).length;
-  const charts = data?.charts ?? {
-    activityCounts: [],
-    activityAvgDurations: [],
-    resourceBlocks: [],
-    processDurationHistogram: []
-  };
 
   return (
     <main className="page">
       <h1>Результаты симуляции</h1>
+
       <form className="toolbar toolbar-form" onSubmit={handleCreateRun}>
         <label htmlFor="spec-path">Путь к спецификации</label>
         <input
@@ -154,10 +174,17 @@ export function SimulationResultPage() {
           {isCreating ? "Создание..." : "Создать запуск"}
         </button>
       </form>
+
       {createError ? <p className="muted">{createError}</p> : null}
+
       <div className="toolbar">
         <label htmlFor="run-select">Запуск</label>
-        <select id="run-select" value={runId} onChange={(event) => setRunId(event.target.value)} disabled={visibleRuns.length === 0}>
+        <select
+          id="run-select"
+          value={runId}
+          onChange={(event) => setRunId(event.target.value)}
+          disabled={visibleRuns.length === 0}
+        >
           {visibleRuns.length === 0 ? <option value="">Нет доступных запусков</option> : null}
           {visibleRuns.map((run) => (
             <option key={run.runId} value={run.runId}>
@@ -167,17 +194,27 @@ export function SimulationResultPage() {
           ))}
         </select>
       </div>
-      {hiddenQueuedCount > 0 ? <p className="muted">Скрыто запусков без результата: {hiddenQueuedCount}</p> : null}
+
+      {hiddenQueuedCount > 0 ? (
+        <p className="muted">Скрыто запусков без результата: {hiddenQueuedCount}</p>
+      ) : null}
+
       <p className="muted">Идентификатор запуска: {data?.runId ?? "—"}</p>
       <p className="muted">Статус: {formatRunStatus(runStatus)}</p>
-      {!runId ? <EmptyState message="Запусков пока нет. Укажите путь к BPMN-файлу и создайте первый запуск." /> : null}
+
+      {!runId && !hasResultData ? (
+        <EmptyState message="Запусков пока нет. Укажите путь к BPMN-файлу и создайте первый запуск." />
+      ) : null}
+
       {runId && runStatus === "failed" ? (
         <ErrorState message="Запуск завершился с ошибкой. Проверьте логи backend для этого run." />
       ) : null}
-      {runId && runStatus !== "completed" ? (
+
+      {runId && !hasResultData && runStatus !== "completed" ? (
         <EmptyState message="Результат для этого запуска пока недоступен. Дождитесь завершения симуляции." />
       ) : null}
-      {runStatus !== "completed" || !runId ? null : (
+
+      {hasResultData ? (
         <>
           <PageSection title="Сводка">
             <SummaryTable
@@ -187,6 +224,7 @@ export function SimulationResultPage() {
               finishedAt={data?.finishedAt}
             />
           </PageSection>
+
           <section className="grid two-cols">
             <PageSection title="Статистика по активностям">
               <ActivitiesTable rows={activities} />
@@ -195,6 +233,7 @@ export function SimulationResultPage() {
               <ResourcesTable rows={resources} />
             </PageSection>
           </section>
+
           <section className="grid three-cols">
             <PageSection title="Количество выполнений активностей">
               <ActivityCountChart data={charts.activityCounts} />
@@ -206,11 +245,12 @@ export function SimulationResultPage() {
               <ResourceBlocksChart data={charts.resourceBlocks} />
             </PageSection>
           </section>
+
           <PageSection title="Распределение длительности процессов">
             <ProcessDurationHistogram data={charts.processDurationHistogram} />
           </PageSection>
         </>
-      )}
+      ) : null}
     </main>
   );
 }

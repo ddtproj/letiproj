@@ -1,24 +1,28 @@
 # LetiProj
 
-Java-based BPMN simulation workspace with:
+`LetiProj` — это Java-ориентированный проект для BPMN-симуляции и аналитики результатов.
 
-- `simulation-dashboard/frontend` - React/Vite analytics UI
-- `simulation-dashboard/backend-java` - Spring Boot backend API
-- `letitsim-main` - Java simulation engine launched by the backend
+Основные части проекта:
 
-The system reads simulation logs, parses events, calculates aggregated metrics, and serves ready-to-render DTOs for tables and charts.
+- `simulation-dashboard/frontend` — React/Vite интерфейс
+- `simulation-dashboard/backend-java` — Spring Boot backend API
+- `letitsim-main` — Java-движок симуляции, который запускает backend
 
-## What the project does
+Система запускает симуляцию по BPMN-файлу, сохраняет лог, парсит его, считает агрегированные метрики и отдает фронту готовые DTO для таблиц и графиков.
 
-1. The frontend creates a simulation run for a BPMN file.
-2. The Java backend launches the simulation engine.
-3. The engine produces execution artifacts and a log.
-4. The backend parses the log and calculates summary, activity, resource, and histogram metrics.
-5. The frontend renders analytics screens from aggregated DTOs instead of raw events.
+Английская версия README: [README.en.md](README.en.md)
 
-## Repository structure
+## Что умеет система
 
-### Active parts
+1. Пользователь указывает путь к BPMN-файлу во frontend.
+2. Java backend создает `run` и запускает движок `letitsim-main`.
+3. Движок выполняет симуляцию и сохраняет артефакты запуска.
+4. Backend парсит лог и считает summary, activity, resource и histogram метрики.
+5. Frontend отображает аналитику не из сырых событий, а из готовых агрегированных DTO.
+
+## Структура репозитория
+
+### Активные части
 
 - `simulation-dashboard/frontend`
 - `simulation-dashboard/backend-java`
@@ -26,95 +30,130 @@ The system reads simulation logs, parses events, calculates aggregated metrics, 
 - `simulation-dashboard/shared`
 - `letitsim-main`
 
-### Archived materials
+### Архивные материалы
 
-- `archive/legacy-bimp-ui` - previous UI implementation
-- `archive/reference/BPSimpyLibrary-main` - reference Python BPSim materials
-- `archive/tools` - one-off helper scripts
+- `archive/legacy-bimp-ui` — старая UI-реализация
+- `archive/reference/BPSimpyLibrary-main` — reference-материалы по BPSim
+- `archive/tools` — разовые вспомогательные скрипты
 
-## Quick Start
+## Быстрый запуск
 
-### 1. Build the engine
+В корне проекта есть готовые bat-файлы:
 
-The backend expects compiled classes inside `letitsim-main/target/classes`.
+- [`run-backend.bat`](run-backend.bat)
+- [`run-frontend.bat`](run-frontend.bat)
 
-```bash
-cd letitsim-main
-mvn package
+### Вариант 1. Через bat-файлы
+
+Сначала backend:
+
+```cmd
+run-backend.bat
 ```
 
-If your engine build differs, see `letitsim-main/README.md`.
+Потом frontend:
 
-### 2. Run the backend
+```cmd
+run-frontend.bat
+```
 
-Requirements:
+### Вариант 2. Ручной запуск
+
+#### Backend
+
+Требования:
 
 - Java 17+
 - Maven 3.9+
 
-```bash
-cd simulation-dashboard/backend-java
+```cmd
+cd /d simulation-dashboard\backend-java
 mvn spring-boot:run
 ```
 
-Default backend URL:
+Backend по умолчанию стартует на:
 
 - `http://127.0.0.1:8000`
 
-### 3. Run the frontend
+#### Frontend
 
-Requirements:
+Требования:
 
 - Node.js 18+
 
-```bash
-cd simulation-dashboard/frontend
+```cmd
+cd /d simulation-dashboard\frontend
 npm install
 npm run dev
 ```
 
-Default frontend URL:
+Frontend по умолчанию стартует на:
 
 - `http://localhost:5173`
 
-### 4. Create a simulation run
+## Как запустить симуляцию
 
-Example BPMN path on Windows:
+1. Открой frontend в браузере.
+2. Вставь путь к BPMN-файлу.
+3. Нажми `Создать запуск`.
+4. Выбери созданный `run` в списке.
+
+Пример пути к BPMN на Windows:
 
 ```text
 c:\Users\Admin\Desktop\bimp-ui-master\letitsim-main\credit_card_application.bpmn
 ```
 
-## Testing
+## Где лежат логи симуляции
+
+Для каждого запуска backend создает отдельную папку в:
+
+`simulation-dashboard/backend-java/storage/runs/<runId>/`
+
+Там лежат:
+
+- `simulation.log` — лог симуляции
+- `parsed-log-dto.json` — распарсенный JSON
+- `stdout.log` — стандартный вывод процесса
+- `stderr.log` — ошибки процесса
+- `meta.json` — статус запуска и служебные данные
+
+## Тесты
 
 ### Backend
 
-```bash
-cd simulation-dashboard/backend-java
+```cmd
+cd /d simulation-dashboard\backend-java
 mvn test
 ```
 
 ### Frontend
 
-```bash
-cd simulation-dashboard/frontend
+```cmd
+cd /d simulation-dashboard\frontend
 npm test
 ```
 
-## Key features
+## Ключевые особенности
 
-- Java-only backend runtime
-- aggregated DTO API for summary, activity, resource, and histogram analytics
-- frontend tables and charts rendered from backend DTOs
-- backend and frontend automated tests for analytics flows
-- archived legacy materials separated from the active product
+- backend runtime полностью на Java
+- frontend получает готовые DTO, а не сырые события
+- есть отдельные DTO для summary, activity, resource и histogram аналитики
+- frontend строит таблицы и графики прямо из server-side DTO
+- legacy-материалы отделены от активного продукта
 
-## Notes
+## Важные замечания
 
-- `simulation-dashboard/backend-java` currently launches `letitsim-main` as a separate Java process
-- do not remove `letitsim-main/target` unless you plan to rebuild the engine
-- the backend stores runtime runs under `simulation-dashboard/backend-java/storage/runs`
+- `simulation-dashboard/backend-java` запускает `letitsim-main` как отдельный Java-процесс
+- после изменений в движке нужно пересобирать `letitsim-main`
+- не удаляй `letitsim-main/target/classes`, если не собираешь движок заново
 
-## License
+## Полезные файлы
 
-See `LICENSE`.
+- [`simulation-dashboard/README.md`](simulation-dashboard/README.md)
+- [`simulation-dashboard/backend-java/README.md`](simulation-dashboard/backend-java/README.md)
+- [`README.en.md`](README.en.md)
+
+## Лицензия
+
+См. [LICENSE](LICENSE).

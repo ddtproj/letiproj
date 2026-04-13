@@ -91,39 +91,73 @@ public class RandomGenerator {
         return this.gamma.nextDouble(alpha, lambda);
     }
 
+    private double timeUnitMultiplier(String timeUnit) throws ProcessValidationException {
+        if (timeUnit == null || timeUnit.trim().isEmpty()) {
+            return 1.0D;
+        }
+
+        switch(timeUnit.trim().toLowerCase()) {
+            case "second":
+            case "seconds":
+                return 1.0D;
+            case "minute":
+            case "minutes":
+                return 60.0D;
+            case "hour":
+            case "hours":
+                return 3600.0D;
+            case "day":
+            case "days":
+                return 86400.0D;
+            default:
+                throw new ProcessValidationException("Unsupported time unit for distribution: " + timeUnit);
+        }
+    }
+
+    private Double normalize(Double value, DistributionInfo di) throws ProcessValidationException {
+        if (value == null || value.isNaN()) {
+            return value;
+        }
+
+        return value * this.timeUnitMultiplier(di.getTimeUnit());
+    }
+
     public double fromDistributionInfo(DistributionInfo di) throws ProcessValidationException {
         if (di == null) {
             return 0.0D;
         } else {
+            Double mean = this.normalize(di.getMean(), di);
+            Double arg1 = this.normalize(di.getArg1(), di);
+            Double arg2 = this.normalize(di.getArg2(), di);
             switch(di.getType()) {
                 case FIXED:
-                    if (di.getMean() != null && !di.getMean().isNaN()) {
-                        return di.getMean();
+                    if (mean != null && !mean.isNaN()) {
+                        return mean;
                     }
 
                     throw new ProcessValidationException("Mean parameter is required for fixed distribution");
                 case UNIFORM:
-                    if (di.getArg1() != null && !di.getArg1().isNaN() && di.getArg2() != null && !di.getArg2().isNaN()) {
-                        return this.uniform(di.getArg1(), di.getArg2());
+                    if (arg1 != null && !arg1.isNaN() && arg2 != null && !arg2.isNaN()) {
+                        return this.uniform(arg1, arg2);
                     }
 
                     throw new ProcessValidationException("Minimum and maximum parameters are required for uniform distribution");
                 case NORMAL:
-                    if (di.getMean() != null && !di.getMean().isNaN() && di.getArg1() != null && !di.getArg1().isNaN()) {
-                        return this.normal(di.getMean(), di.getArg1());
+                    if (mean != null && !mean.isNaN() && arg1 != null && !arg1.isNaN()) {
+                        return this.normal(mean, arg1);
                     }
 
                     throw new ProcessValidationException("Mean and standard deviation parameters are required for normal distribution");
                 case EXPONENTIAL:
-                    if (di.getArg1() != null && !di.getArg1().isNaN() && di.getArg1() != 0.0D) {
-                        return this.exponential(1.0D / di.getArg1());
+                    if (arg1 != null && !arg1.isNaN() && arg1 != 0.0D) {
+                        return this.exponential(1.0D / arg1);
                     }
 
                     return 0.0D;
                 case GAMMA:
-                    if (di.getMean() != null && !di.getMean().isNaN() && di.getArg1() != null && !di.getArg1().isNaN()) {
-                        if (di.getMean() > 0.0D && di.getArg1() >= 0.0D) {
-                            return this.gamma(di.getMean(), di.getArg1());
+                    if (mean != null && !mean.isNaN() && arg1 != null && !arg1.isNaN()) {
+                        if (mean > 0.0D && arg1 >= 0.0D) {
+                            return this.gamma(mean, arg1);
                         }
 
                         throw new ProcessValidationException("Invalid parameter values for gamma distribution. Following condition not met: mean > 0 and variance >= 0");
@@ -131,9 +165,9 @@ public class RandomGenerator {
 
                     throw new ProcessValidationException("Mean and variance parameters are required for gamma distribution");
                 case TRIANGULAR:
-                    if (di.getMean() != null && !di.getMean().isNaN() && di.getArg1() != null && !di.getArg1().isNaN() && di.getArg2() != null && !di.getArg2().isNaN()) {
-                        if (di.getArg1() < di.getArg2() && di.getArg1() <= di.getMean() && di.getMean() <= di.getArg2()) {
-                            return this.triangular(di.getMean(), di.getArg1(), di.getArg2());
+                    if (mean != null && !mean.isNaN() && arg1 != null && !arg1.isNaN() && arg2 != null && !arg2.isNaN()) {
+                        if (arg1 < arg2 && arg1 <= mean && mean <= arg2) {
+                            return this.triangular(mean, arg1, arg2);
                         }
 
                         throw new ProcessValidationException("Invalid parameter values for triangular distribution. Required a < b, a <= mode <= b");
@@ -141,9 +175,9 @@ public class RandomGenerator {
 
                     throw new ProcessValidationException("Mode, minimum at a and maximum at be parameters are required for triangular distribution");
                 case LOGNORMAL:
-                    if (di.getMean() != null && !di.getMean().isNaN() && di.getArg1() != null && !di.getArg1().isNaN()) {
-                        if (di.getMean() > 0.0D && di.getArg1() >= 0.0D) {
-                            return this.lognormal(di.getMean(), di.getArg1());
+                    if (mean != null && !mean.isNaN() && arg1 != null && !arg1.isNaN()) {
+                        if (mean > 0.0D && arg1 >= 0.0D) {
+                            return this.lognormal(mean, arg1);
                         }
 
                         throw new ProcessValidationException("Following condition not met for log-normal distribution: mean > 0 and variance >= 0");

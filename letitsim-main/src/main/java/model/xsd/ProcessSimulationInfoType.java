@@ -8,8 +8,8 @@ import java.util.List;
 
 @XmlAccessorType(XmlAccessType.FIELD)
 @XmlType(
-        name = "ProcessSimulationInfoType",
-        propOrder = {"arrivalRateDistribution", "timetables", "resources", "elements", "sequenceFlows"}
+    name = "ProcessSimulationInfoType",
+        propOrder = {"arrivalRateDistribution", "timetables", "resources", "elements", "sequenceFlows", "any"}
 )
 @XmlSeeAlso({ProcessSimulationInfo.class})
 public class ProcessSimulationInfoType {
@@ -21,6 +21,8 @@ public class ProcessSimulationInfoType {
     protected ProcessSimulationInfoType.Resources resources;
     protected ProcessSimulationInfoType.Elements elements;
     protected ProcessSimulationInfoType.SequenceFlows sequenceFlows;
+    @XmlAnyElement(lax = true)
+    protected List<Object> any;
     @XmlAttribute(
             name = "id"
     )
@@ -91,6 +93,14 @@ public class ProcessSimulationInfoType {
 
     public void setSequenceFlows(ProcessSimulationInfoType.SequenceFlows value) {
         this.sequenceFlows = value;
+    }
+
+    public List<Object> getAny() {
+        if (this.any == null) {
+            this.any = new ArrayList();
+        }
+
+        return this.any;
     }
 
     public String getId() {

@@ -187,7 +187,7 @@ public class BPMN2XmlParser extends BPMN2Parser {
 
     public double getElementDurationThreshold(String elementId) {
         ElementSimulationInfoType tsi = this.getElementSimulationInfo(elementId);
-        return tsi != null && tsi.getDurationThreshold() != null ? tsi.getDurationThreshold() : -1.0D;
+        return tsi != null && tsi.getDurationThreshold() != null ? this.toSeconds(tsi.getDurationThreshold(), tsi.getDurationThresholdTimeUnit()) : -1.0D;
     }
 
     private ElementSimulationInfoType getElementSimulationInfo(String elementId) {
@@ -237,5 +237,28 @@ public class BPMN2XmlParser extends BPMN2Parser {
     protected boolean simulateSubProcessAsTask(String subProcessId) {
         ElementSimulationInfoType simInfo = this.getElementSimulationInfo(subProcessId);
         return simInfo != null && simInfo.isSimulateAsTask() != null && simInfo.isSimulateAsTask();
+    }
+
+    private double toSeconds(double value, String timeUnit) {
+        if (timeUnit == null || timeUnit.trim().isEmpty()) {
+            return value;
+        }
+
+        switch(timeUnit.trim().toLowerCase()) {
+            case "second":
+            case "seconds":
+                return value;
+            case "minute":
+            case "minutes":
+                return value * 60.0D;
+            case "hour":
+            case "hours":
+                return value * 3600.0D;
+            case "day":
+            case "days":
+                return value * 86400.0D;
+            default:
+                return value;
+        }
     }
 }
