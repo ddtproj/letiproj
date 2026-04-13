@@ -81,10 +81,7 @@ export function SimulationResultPage() {
     let active = true;
     const timer = setInterval(async () => {
       try {
-        const [statusResult, runItems] = await Promise.all([
-          fetchRunStatus(runId),
-          fetchRuns()
-        ]);
+        const [statusResult, runItems] = await Promise.all([fetchRunStatus(runId), fetchRuns()]);
 
         if (!active) {
           return;
@@ -116,7 +113,6 @@ export function SimulationResultPage() {
       setRuns(items);
       setRunId(createdRun.runId);
       setRunStatus(createdRun.status);
-      setNewSpecPath("");
     } catch (err) {
       setCreateError(err.message);
     } finally {
@@ -152,7 +148,7 @@ export function SimulationResultPage() {
           type="text"
           value={newSpecPath}
           onChange={(event) => setNewSpecPath(event.target.value)}
-          placeholder="samples/bpsim/demo-scenario.xml"
+          placeholder="c:/path/to/process.bpmn"
         />
         <button type="submit" disabled={isCreating}>
           {isCreating ? "Создание..." : "Создать запуск"}
@@ -171,16 +167,10 @@ export function SimulationResultPage() {
           ))}
         </select>
       </div>
-      {hiddenQueuedCount > 0 ? (
-        <p className="muted">
-          Скрыто запусков без результата: {hiddenQueuedCount}
-        </p>
-      ) : null}
+      {hiddenQueuedCount > 0 ? <p className="muted">Скрыто запусков без результата: {hiddenQueuedCount}</p> : null}
       <p className="muted">Идентификатор запуска: {data?.runId ?? "—"}</p>
       <p className="muted">Статус: {formatRunStatus(runStatus)}</p>
-      {!runId ? (
-        <EmptyState message="Запусков пока нет. Укажите путь к BPMN-файлу и создайте первый запуск." />
-      ) : null}
+      {!runId ? <EmptyState message="Запусков пока нет. Укажите путь к BPMN-файлу и создайте первый запуск." /> : null}
       {runId && runStatus === "failed" ? (
         <ErrorState message="Запуск завершился с ошибкой. Проверьте логи backend для этого run." />
       ) : null}
